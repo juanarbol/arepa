@@ -1,8 +1,17 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
+enum Type {
+  METHOD,
+  URL,
+  VERSION,
+  HEADER,
+  BODY,
+  INVALID
+};
+
 typedef struct {
-  char* type;
+  enum Type type;
   char* literal;
 } Token;
 

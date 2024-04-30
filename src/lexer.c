@@ -6,6 +6,8 @@
 Lexer* newLexer(char* input) {
   // Init and set the input
   Lexer* lexer = (Lexer*)malloc(sizeof(Lexer));
+  if (lexer == NULL) return NULL;
+
   lexer->input = input;
   lexer->readPosition = 0;
   lexer->lineNumber = 0;
@@ -26,7 +28,6 @@ Token* NextToken(Lexer* lexer) {
   // Before cutting the \n, make sure we don't mess up the body parsing
   int is_body = peek(lexer) == '\n' && lexer->ch == '\n';
   Token* tok = (Token*)malloc(sizeof(Token));
-  if (tok == NULL) return NULL;
 
   skipSpace(lexer);
 
@@ -37,7 +38,7 @@ Token* NextToken(Lexer* lexer) {
   }
 
   if (lexer->ch == '\0') {
-    tok->type = "EOF";
+    tok->type = EOF;
     tok->literal = "";
     return tok;
   }
@@ -49,8 +50,7 @@ Token* NextToken(Lexer* lexer) {
   }
 
   if (tok == NULL) return NULL;
-  if (strcmp(tok->type, "INVALID") == 0)
-    report_invalid_token(lexer);
+  if (tok->type == INVALID) report_invalid_token(lexer);
 
   return tok;
 }
@@ -62,7 +62,7 @@ Token* do_consume_body(Lexer* lexer) {
   char* body = readBody(lexer);
   if (body == NULL) return NULL;
 
-  tok->type = "BODY";
+  tok->type = BODY;
   tok->literal = body;
 
   return tok;
@@ -75,7 +75,7 @@ Token* do_consume_headers(Lexer* lexer) {
   char* header = readHeader(lexer);
   if (header == NULL) return NULL;
 
-  tok->type = "HEADER";
+  tok->type = HEADER;
   tok->literal = header;
 
   return tok;
@@ -105,7 +105,7 @@ Token* do_consume_heading(Lexer* lexer) {
       free(tok);
       return NULL;
     }
-    tok->type = "URL";
+    tok->type = URL;
     strcpy(tok->literal, ident);
     return tok;
   }
@@ -114,7 +114,7 @@ Token* do_consume_heading(Lexer* lexer) {
   if (lexer->ch == 'H') {
     char* version = readVersion(lexer);
     if (version == NULL) return NULL;
-    tok->type = "VERSION";
+    tok->type = VERSION;
     tok->literal = version;
     return tok;
   }
@@ -134,7 +134,8 @@ void skipSpace(Lexer* lexer) {
 
 char* readVersion(Lexer* lexer) {
   int pos = lexer->position;
-  char* identifier = malloc(sizeof(char));
+  int max_length = strlen(lexer->input + pos) + 1;
+  char* identifier = malloc(max_length * sizeof(char));
   // Read HTTP/X.Y
   while (isLetter(lexer->ch) ||
          isDigit(lexer->ch) ||
@@ -144,49 +145,58 @@ char* readVersion(Lexer* lexer) {
   }
 
   strncpy(identifier, lexer->input + pos, lexer->position - pos);
+  identifier[max_length - 1] = '\0';
   return identifier;
 }
 
 char* readURL(Lexer* lexer) {
   int pos = lexer->position;
-  char* identifier = malloc(sizeof(char));
+  int max_length = strlen(lexer->input + pos) + 1;
+  char* identifier = malloc(max_length * sizeof(char));
   // Skip the / first
   do {
     readChar(lexer);
   } while (isLetter(lexer->ch));
 
   strncpy(identifier, lexer->input + pos, lexer->position - pos);
+  identifier[max_length - 1] = '\0';
   return identifier;
 }
 
 char* readBody(Lexer* lexer) {
   int pos = lexer->position;
-  char* identifier = malloc(sizeof(char));
+  int max_length = strlen(lexer->input + pos) + 1;
+  char* identifier = malloc(max_length * sizeof(char));
   while (lexer->ch != '\n' && lexer->ch != '\0') {
     readChar(lexer);
   }
 
   strncpy(identifier, lexer->input + pos, lexer->position - pos);
+  identifier[max_length - 1] = '\0';
   return identifier;
 }
 
 char* readHeader(Lexer* lexer) {
   int pos = lexer->position;
-  char* identifier = malloc(sizeof(char));
+  int max_length = strlen(lexer->input + pos) + 1;
+  char* identifier = malloc(max_length * sizeof(char));
   while (lexer->ch != '\n' && lexer->ch != '\0') {
     readChar(lexer);
   }
 
   strncpy(identifier, lexer->input + pos, lexer->position - pos);
+  identifier[max_length - 1] = '\0';
   return identifier;
 }
 
 char* readIdentifier(Lexer* lexer) {
   int pos = lexer->position;
-  char* identifier = malloc(sizeof(char));
+  int max_length = strlen(lexer->input + pos) + 1;
+  char* identifier = malloc(max_length * sizeof(char));
   while (isLetter(lexer->ch)) readChar(lexer);
 
   strncpy(identifier, lexer->input + pos, lexer->position - pos);
+  identifier[max_length - 1] = '\0';
   return identifier;
 }
 
